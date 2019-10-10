@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-URL=''
+URL='https://raw.githubusercontent.com/firstvds/winhide/master/winhide.tgz'
 
 winhide() {
 cat <<EOF
