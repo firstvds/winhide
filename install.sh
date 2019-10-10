@@ -23,6 +23,7 @@ vds_addons:
   winlic: "winlic" #Служебное имя аддона отвечающего за количество лицензий windows
 EOF
 }
+set -o pipefail
 
 echo 'Check billmgr'
 if /usr/local/mgr5/sbin/mgrctl mgr|grep 'name=billmgr' >/dev/null; then
@@ -34,10 +35,10 @@ if /usr/local/mgr5/sbin/mgrctl mgr|grep 'name=billmgr' >/dev/null; then
     curl -s ${URL}|tar -C /usr/local/mgr5 -zx || { echo 'failed' && exit 1 ;}
     echo 'Search project id'
     prjid=$(/usr/local/mgr5/sbin/mgrctl -m billmgr project|grep -Eo '(^|[[:space:]])id=[^[:space:]]*'|cut -d= -f2|head -n1)
-    [[ ${prjid} ]] && prj="project='${prj}'"
+    [[ ${prjid} ]] && prj="project=${prjid}"
     echo 'Create service client'
     cid=$(/usr/local/mgr5/sbin/mgrctl -m billmgr account.edit email="noreply@example.ru" ${prj} client_lang='ru' country='182' state='null' realname='Monitoring' passwd="%#${RANDOM}@qWQ" confirm="%#${RANDOM}@qWQ" notify='off' recovery='off' sok=ok|grep -Eo '[0-9]*')
-    winhide ${sales} ${cid} > /usr/local/mgr5/etc/winhide.conf
+    [[ ${cid} ]] || { echo 'failed' && exit 1 ;} && winhide ${sales} ${cid} > /usr/local/mgr5/etc/winhide.conf
     /usr/local/mgr5/sbin/mgrctl -m billmgr exit
     echo '0 4 * * * root /usr/local/mgr5/addon/winhide --sync > /var/log/billitemchk.log' > /etc/cron.d/billitemchk
     echo 'Plugin installed'
